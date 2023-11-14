@@ -15,7 +15,7 @@ class CredalRetriever(BaseRetriever):
 
     base_url = "https://api.credal.ai"
     search_url = f"{base_url}/api/v0/search/searchDocumentCollection"
-    document_collection_id: str
+    # document_collection_id: str
     metadata_filter_expression: Optional[str]
     max_chunks: Optional[int]
     merge_contents: Optional[bool]
@@ -25,7 +25,7 @@ class CredalRetriever(BaseRetriever):
 
     def __search_blob(self, query) -> dict:
         search = {
-            "documentCollectionId": self.document_collection_id,
+            # "documentCollectionId": self.document_collection_id,
             "searchQuery": query,
             "userEmail": self.user_email,
         }
@@ -41,7 +41,6 @@ class CredalRetriever(BaseRetriever):
             search_options["threshold"] = self.threshold
 
         search["search_options"] = search_options
-        print(search)
         return search
 
     def _get_relevant_documents(
@@ -56,7 +55,6 @@ class CredalRetriever(BaseRetriever):
             },
         )
         results = response.json()
-        print(results)
         return [
             Document(
                 page_content=chunk["text"],
