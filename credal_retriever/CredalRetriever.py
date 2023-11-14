@@ -21,8 +21,17 @@ class CredalRetriever(BaseRetriever):
     merge_contents: Optional[bool]
     threshold: Optional[float]
     api_key: str
+    user_email: str
 
-    def __search_options(self) -> dict:
+    def __search_blob(self, query) -> dict:
+        search = {
+            "documentCollectionId": self.document_collection_id,
+            "searchQuery": query,
+            "userEmail": self.user_email,
+        }
+        if self.metadata_filter_expression is not None:
+            search["metadataFilterExpression"] = self.metadata_filter_expression
+
         search_options = {}
         if self.max_chunks is not None:
             search_options["maxChunks"] = self.max_chunks
@@ -30,25 +39,24 @@ class CredalRetriever(BaseRetriever):
             search_options["mergeContents"] = self.merge_contents
         if self.threshold is not None:
             search_options["threshold"] = self.threshold
-        return search_options
+
+        search["search_options"] = search_options
+        print(search)
+        return search
 
     def _get_relevant_documents(
         self, query: str, *, run_manager: CallbackManagerForRetrieverRun
     ) -> List[Document]:
         response = requests.post(
             self.search_url,
-            json={
-                "documentCollectionId": self.document_collection_id,
-                "searchQuery": query,
-                "metadataFilterExpression": self.metadata_filter_expression,
-                "searchOptions": self.__search_options(),
-            },
+            json=self.__search_blob(query),
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self.api_key}",
             },
         )
         results = response.json()
+        print(results)
         return [
             Document(
                 page_content=chunk["text"],
@@ -72,12 +80,7 @@ class CredalRetriever(BaseRetriever):
             async with session.request(
                 "POST",
                 self.search_url,
-                json={
-                    "documentCollectionId": self.document_collection_id,
-                    "searchQuery": query,
-                    "metadataFilterExpression": self.metadata_filter_expression,
-                    "searchOptions": self.__search_options(),
-                },
+                json=self.__search_blob(query),
                 headers={
                     "Content-Type": "application/json",
                     "Authorization": f"Bearer {self.api_key}",
